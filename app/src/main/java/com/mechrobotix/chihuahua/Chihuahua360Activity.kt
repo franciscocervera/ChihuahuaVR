@@ -26,6 +26,7 @@ import com.mechrobotix.chihuahua.demo.DemoSequence
 import com.mechrobotix.chihuahua.experience.HotspotGazeCandidate
 import com.mechrobotix.chihuahua.experience.HotspotGazeTracker
 import com.mechrobotix.chihuahua.haptics.VestHapticCoordinator
+import com.mechrobotix.chihuahua.ui.BrandLogoPanel
 import com.mechrobotix.chihuahua.ui.Chihuahua360Panel
 import com.mechrobotix.chihuahua.ui.DemoControlPanel
 import com.mechrobotix.chihuahua.ui.HotspotInfoPanel
@@ -55,6 +56,7 @@ import com.meta.spatial.toolkit.PanelRenderMode
 import com.meta.spatial.toolkit.PanelStyleOptions
 import com.meta.spatial.toolkit.QuadShapeOptions
 import com.meta.spatial.toolkit.Transform
+import com.meta.spatial.toolkit.TransformParent
 import com.meta.spatial.toolkit.UIPanelRenderOptions
 import com.meta.spatial.toolkit.UIPanelSettings
 import com.meta.spatial.toolkit.VisibilityState
@@ -118,12 +120,15 @@ class Chihuahua360Activity : AppSystemActivity() {
     private val sceneTransitionToAccent: StateFlow<Long> = _sceneTransitionToAccent.asStateFlow()
     private val _sceneTransitionColorProgress = MutableStateFlow(1f)
     private val sceneTransitionColorProgress: StateFlow<Float> = _sceneTransitionColorProgress.asStateFlow()
+    private val _sceneTransitionShowBrand = MutableStateFlow(false)
+    private val sceneTransitionShowBrand: StateFlow<Boolean> = _sceneTransitionShowBrand.asStateFlow()
     private val hotspotMarkerStates = List(MAX_HOTSPOTS) {
         MutableStateFlow<HotspotMarkerState?>(null)
     }
     private val hotspotMarkers = hotspotMarkerStates.map { it.asStateFlow() }
     private var environmentEntity: Entity? = null
     private var mainPanelEntity: Entity? = null
+    private var brandLogoEntity: Entity? = null
     private var sceneToolbarEntity: Entity? = null
     private var hotspotInfoEntity: Entity? = null
     private var sceneTransitionEntity: Entity? = null
@@ -204,7 +209,7 @@ class Chihuahua360Activity : AppSystemActivity() {
             ),
         )
 
-        mainPanelEntity = Entity.createPanelEntity(
+        val mainPanel = Entity.createPanelEntity(
             R.id.main_panel,
             Transform(MAIN_PANEL_POSE),
         ).also { entity ->
@@ -216,6 +221,13 @@ class Chihuahua360Activity : AppSystemActivity() {
                 ),
             )
         }
+        mainPanelEntity = mainPanel
+        brandLogoEntity = Entity.createPanelEntity(
+            R.id.brand_logo_panel,
+            Transform(BRAND_LOGO_LOCAL_POSE),
+            TransformParent(mainPanel),
+        ).also(::disablePanelHitTesting)
+
         sceneToolbarEntity = Entity.createPanelEntity(
             R.id.scene_toolbar_panel,
             Transform(SCENE_TOOLBAR_POSE),
@@ -240,6 +252,7 @@ class Chihuahua360Activity : AppSystemActivity() {
         )
 
         setPanelVisibility(mainPanelEntity, visible = true)
+        setPanelVisibility(brandLogoEntity, visible = true)
         setPanelVisibility(sceneToolbarEntity, visible = false)
         setPanelVisibility(hotspotInfoEntity, visible = false)
         setHotspotMarkersVisible(false)
@@ -250,6 +263,23 @@ class Chihuahua360Activity : AppSystemActivity() {
 
     override fun registerPanels(): List<PanelRegistration> {
         val applicationPanels = listOf(
+            ComposeViewPanelRegistration(
+                R.id.brand_logo_panel,
+                composeViewCreator = { _, context ->
+                    ComposeView(context).apply {
+                        setBackgroundColor(android.graphics.Color.TRANSPARENT)
+                        setContent { BrandLogoPanel() }
+                    }
+                },
+                settingsCreator = {
+                    UIPanelSettings(
+                        shape = QuadShapeOptions(width = 1.081f, height = 0.392f),
+                        style = PanelStyleOptions(themeResourceId = R.style.Theme_Transparent),
+                        display = DpPerMeterDisplayOptions(dpPerMeter = 370f, resolutionScale = 1f),
+                        rendering = UIPanelRenderOptions(renderMode = PanelRenderMode.Mesh()),
+                    )
+                },
+            ),
             ComposeViewPanelRegistration(
                 R.id.main_panel,
                 composeViewCreator = { _, context ->
@@ -403,6 +433,7 @@ class Chihuahua360Activity : AppSystemActivity() {
                             fromAccentArgb = sceneTransitionFromAccent,
                             toAccentArgb = sceneTransitionToAccent,
                             colorProgress = sceneTransitionColorProgress,
+                            showBrand = sceneTransitionShowBrand,
                         )
                     }
                 }
@@ -432,6 +463,7 @@ class Chihuahua360Activity : AppSystemActivity() {
         prepareHotspotMarkers(destination)
         setHotspotInteractionEnabled(false)
         setMainPanelVisible(false)
+        setPanelVisibility(brandLogoEntity, visible = false)
         setPanelVisibility(sceneToolbarEntity, visible = false)
         setHotspotMarkersVisible(false)
 
@@ -471,6 +503,7 @@ class Chihuahua360Activity : AppSystemActivity() {
         startDemoMusic()
         closeHotspotInfo(stopNarration = false, restoreToolbar = false)
         setMainPanelVisible(false)
+        setPanelVisibility(brandLogoEntity, visible = false)
         setPanelVisibility(sceneToolbarEntity, visible = false)
         setHotspotMarkersVisible(false)
         setPanelVisibility(demoControlEntity, visible = true)
@@ -490,6 +523,7 @@ class Chihuahua360Activity : AppSystemActivity() {
         prepareHotspotMarkers(destination)
         setHotspotInteractionEnabled(false)
         setMainPanelVisible(false)
+        setPanelVisibility(brandLogoEntity, visible = false)
         setPanelVisibility(sceneToolbarEntity, visible = false)
         setHotspotMarkersVisible(false)
         setPanelVisibility(demoControlEntity, visible = true)
@@ -546,6 +580,7 @@ class Chihuahua360Activity : AppSystemActivity() {
             title = "Chihuahua 360",
             subtitle = "Gracias por recorrer Chihuahua",
             targetAccentArgb = DEFAULT_PORTAL_ACCENT,
+            showBrand = true,
             onSceneCovered = {
                 stopAmbientAudio()
                 _selectedDestination.value = null
@@ -555,6 +590,7 @@ class Chihuahua360Activity : AppSystemActivity() {
         )
         setPanelVisibility(demoControlEntity, visible = false)
         setMainPanelVisible(true)
+        setPanelVisibility(brandLogoEntity, visible = true)
         Log.i(TAG, "Recorrido guiado finalizado")
     }
 
@@ -719,6 +755,7 @@ class Chihuahua360Activity : AppSystemActivity() {
         setPanelVisibility(sceneToolbarEntity, visible = false)
         setHotspotMarkersVisible(false)
         setMainPanelVisible(false)
+        setPanelVisibility(brandLogoEntity, visible = false)
 
         launchSceneTransition(
             spec = INTERACTIVE_TRANSITION,
@@ -734,6 +771,7 @@ class Chihuahua360Activity : AppSystemActivity() {
             },
             onTransitionFinished = {
                 setMainPanelVisible(true)
+                setPanelVisibility(brandLogoEntity, visible = true)
                 Log.i(TAG, "Regreso al lobby")
             },
         )
@@ -1068,9 +1106,16 @@ class Chihuahua360Activity : AppSystemActivity() {
         title: String?,
         subtitle: String?,
         targetAccentArgb: Long,
+        showBrand: Boolean = false,
         onSceneCovered: () -> Unit,
     ) {
-        val generation = beginSceneTransition(style, title, subtitle, targetAccentArgb)
+        val generation = beginSceneTransition(
+            style = style,
+            title = title,
+            subtitle = subtitle,
+            targetAccentArgb = targetAccentArgb,
+            showBrand = showBrand,
+        )
         val initialAlpha = _sceneTransitionAlpha.value.coerceIn(0f, 1f)
         try {
             animateTransitionAlpha(
@@ -1108,6 +1153,7 @@ class Chihuahua360Activity : AppSystemActivity() {
             title = title,
             subtitle = subtitle,
             targetAccentArgb = targetAccentArgb,
+            showBrand = true,
         )
         animateTransitionAlpha(
             from = _sceneTransitionAlpha.value.coerceIn(0f, 1f),
@@ -1142,6 +1188,7 @@ class Chihuahua360Activity : AppSystemActivity() {
         title: String?,
         subtitle: String?,
         targetAccentArgb: Long,
+        showBrand: Boolean = false,
     ): Int {
         val generation = ++sceneTransitionGeneration
         _sceneTransitionStyle.value = style
@@ -1150,6 +1197,7 @@ class Chihuahua360Activity : AppSystemActivity() {
         _sceneTransitionFromAccent.value = currentSceneAccentArgb
         _sceneTransitionToAccent.value = targetAccentArgb
         _sceneTransitionColorProgress.value = 0f
+        _sceneTransitionShowBrand.value = showBrand
         setPanelVisibility(sceneTransitionEntity, visible = true)
         if (style == SceneTransitionStyle.PORTAL) playTransitionSound()
         return generation
@@ -1162,6 +1210,7 @@ class Chihuahua360Activity : AppSystemActivity() {
         _sceneTransitionColorProgress.value = 1f
         _sceneTransitionTitle.value = null
         _sceneTransitionSubtitle.value = null
+        _sceneTransitionShowBrand.value = false
         setPanelVisibility(sceneTransitionEntity, visible = false)
     }
 
@@ -1442,6 +1491,7 @@ class Chihuahua360Activity : AppSystemActivity() {
         hotspotMarkerEntities.forEach { it?.destroy() }
         hotspotInfoEntity?.destroy()
         sceneToolbarEntity?.destroy()
+        brandLogoEntity?.destroy()
         mainPanelEntity?.destroy()
         sceneTransitionEntity?.destroy()
         demoControlEntity?.destroy()
@@ -1449,6 +1499,7 @@ class Chihuahua360Activity : AppSystemActivity() {
         hotspotMarkerEntities.indices.forEach { hotspotMarkerEntities[it] = null }
         hotspotInfoEntity = null
         sceneToolbarEntity = null
+        brandLogoEntity = null
         mainPanelEntity = null
         sceneTransitionEntity = null
         demoControlEntity = null
@@ -1481,11 +1532,13 @@ class Chihuahua360Activity : AppSystemActivity() {
         _sceneTransitionFromAccent.value = DEFAULT_PORTAL_ACCENT
         _sceneTransitionToAccent.value = DEFAULT_PORTAL_ACCENT
         _sceneTransitionColorProgress.value = 1f
+        _sceneTransitionShowBrand.value = false
         setPanelVisibility(sceneTransitionEntity, visible = false)
         setPanelVisibility(sceneToolbarEntity, visible = false)
         setPanelVisibility(hotspotInfoEntity, visible = false)
         setPanelVisibility(demoControlEntity, visible = false)
         setMainPanelVisible(true)
+        setPanelVisibility(brandLogoEntity, visible = true)
     }
 
     override fun onStop() {
@@ -1593,6 +1646,9 @@ class Chihuahua360Activity : AppSystemActivity() {
         private val MAIN_PANEL_POSE = Pose(
             Vector3(0f, 1.30f, 2.58f),
             Quaternion(0f, 180f, 0f),
+        )
+        private val BRAND_LOGO_LOCAL_POSE = Pose(
+            Vector3(0f, 1.14f, 0.01f),
         )
         private val SCENE_TOOLBAR_POSE = Pose(
             Vector3(0f, 0.96f, 2.58f),

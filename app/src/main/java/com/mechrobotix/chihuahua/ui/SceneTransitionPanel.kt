@@ -5,14 +5,18 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
@@ -23,6 +27,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.flow.StateFlow
 import kotlin.math.PI
@@ -45,6 +50,7 @@ fun SceneTransitionPanel(
     fromAccentArgb: StateFlow<Long>,
     toAccentArgb: StateFlow<Long>,
     colorProgress: StateFlow<Float>,
+    showBrand: StateFlow<Boolean>,
 ) {
     val currentAlpha by alpha.collectAsState()
     val currentTitle by title.collectAsState()
@@ -53,6 +59,7 @@ fun SceneTransitionPanel(
     val fromAccent by fromAccentArgb.collectAsState()
     val toAccent by toAccentArgb.collectAsState()
     val currentColorProgress by colorProgress.collectAsState()
+    val currentShowBrand by showBrand.collectAsState()
     val normalizedAlpha = currentAlpha.coerceIn(0f, 1f)
     val copyAlpha = ((normalizedAlpha - 0.62f) / 0.38f).coerceIn(0f, 1f)
     val accent = mixColor(Color(fromAccent), Color(toAccent), currentColorProgress)
@@ -79,6 +86,15 @@ fun SceneTransitionPanel(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
             ) {
+                if (currentShowBrand) {
+                    BrandLogo(
+                        modifier = Modifier
+                            .width(220.dp)
+                            .height(80.dp)
+                            .alpha(copyAlpha),
+                    )
+                    Spacer(Modifier.height(18.dp))
+                }
                 Text(
                     text = currentTitle.orEmpty().uppercase(),
                     modifier = Modifier.fillMaxWidth(0.70f),
