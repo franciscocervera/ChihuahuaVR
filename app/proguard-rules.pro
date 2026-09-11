@@ -1,0 +1,2 @@
+-keep class com.meta.spatial.** { *; }
+-dontwarn com.meta.spatial.**

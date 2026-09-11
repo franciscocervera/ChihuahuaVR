@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item type="id" name="main_panel" />
+    <item type="id" name="scene_toolbar_panel" />
+    <item type="id" name="hotspot_info_panel" />
+    <item type="id" name="hotspot_marker_1_panel" />
+    <item type="id" name="hotspot_marker_2_panel" />
+    <item type="id" name="hotspot_marker_3_panel" />
+    <item type="id" name="scene_transition_panel" />
+    <item type="id" name="demo_control_panel" />
+</resources>
