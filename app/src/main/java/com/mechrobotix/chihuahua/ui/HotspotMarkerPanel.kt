@@ -56,6 +56,8 @@ fun HotspotMarkerPanel(
         ),
         label = "hotspotMarkerScale",
     )
+    val reveal = marker.revealProgress.coerceIn(0f, 1f)
+    val revealEase = reveal * reveal * (3f - 2f * reveal)
     val targetScale = when {
         marker.isGazed -> 1.07f
         marker.attention -> 1.035f + (idlePulse - 0.985f) * 0.7f
@@ -78,14 +80,14 @@ fun HotspotMarkerPanel(
                 .fillMaxSize()
                 .padding(8.dp)
                 .graphicsLayer {
-                    scaleX = targetScale
-                    scaleY = targetScale
+                    scaleX = targetScale * (0.72f + revealEase * 0.28f)
+                    scaleY = targetScale * (0.72f + revealEase * 0.28f)
                     shadowElevation = if (marker.isGazed) 22f else 10f
                 }
-                .alpha(markerAlpha)
+                .alpha(markerAlpha * revealEase)
                 .clip(RoundedCornerShape(28.dp))
                 .background(Color(0xE9191C21))
-                .clickable(enabled = marker.enabled) { onSelected(marker) }
+                .clickable(enabled = marker.enabled && reveal >= 0.999f) { onSelected(marker) }
                 .semantics {
                     contentDescription = "Punto ${marker.presentation.index + 1}: ${marker.presentation.hotspot.title}"
                 },

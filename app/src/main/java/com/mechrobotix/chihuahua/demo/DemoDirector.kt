@@ -15,6 +15,7 @@ class DemoDirector(
     destinations: List<Destination>,
     private val sequence: List<DemoStep>,
     private val scope: CoroutineScope,
+    private val onTravelToDestination: suspend (Destination?, Destination, Int, Int) -> Unit,
     private val onPresentDestination: suspend (Destination, Int, Int) -> Unit,
     private val onNarrateAndAwait: suspend (String) -> NarrationEvent,
     private val onFinished: suspend () -> Unit,
@@ -63,17 +64,21 @@ class DemoDirector(
 
     private suspend fun runSequence() {
         val total = sequence.size
+        var previousDestination: Destination? = null
         sequence.forEachIndexed { index, step ->
             val destination = destinationsById.getValue(step.destinationId)
             _state.value = DemoState(
                 active = true,
                 stepIndex = index,
                 totalSteps = total,
-                phase = DemoPhase.TRANSITIONING,
+                phase = DemoPhase.TRAVELING,
                 destinationTitle = destination.title,
                 destinationCategory = destination.category,
             )
 
+            onTravelToDestination(previousDestination, destination, index, total)
+
+            _state.value = _state.value.copy(phase = DemoPhase.TRANSITIONING)
             onPresentDestination(destination, index, total)
 
             _state.value = _state.value.copy(phase = DemoPhase.NARRATING)
@@ -81,6 +86,7 @@ class DemoDirector(
 
             _state.value = _state.value.copy(phase = DemoPhase.DWELLING)
             delay(step.holdAfterNarrationMs)
+            previousDestination = destination
         }
 
         _state.value = _state.value.copy(

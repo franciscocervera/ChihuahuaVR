@@ -8,6 +8,7 @@ enum class DemoHapticMode {
 
 enum class DemoPhase {
     IDLE,
+    TRAVELING,
     TRANSITIONING,
     NARRATING,
     DWELLING,

@@ -7,4 +7,5 @@ data class HotspotMarkerState(
     val gazeProgress: Float = 0f,
     val attention: Boolean = false,
     val discovered: Boolean = false,
+    val revealProgress: Float = 1f,
 )

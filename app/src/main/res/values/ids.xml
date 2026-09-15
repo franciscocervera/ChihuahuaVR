@@ -9,4 +9,11 @@
     <item type="id" name="hotspot_marker_3_panel" />
     <item type="id" name="scene_transition_panel" />
     <item type="id" name="demo_control_panel" />
+    <item type="id" name="portal_depth_1_panel" />
+    <item type="id" name="portal_depth_2_panel" />
+    <item type="id" name="portal_depth_3_panel" />
+    <item type="id" name="ambient_particles_front_panel" />
+    <item type="id" name="ambient_particles_right_panel" />
+    <item type="id" name="ambient_particles_back_panel" />
+    <item type="id" name="ambient_particles_left_panel" />
 </resources>
