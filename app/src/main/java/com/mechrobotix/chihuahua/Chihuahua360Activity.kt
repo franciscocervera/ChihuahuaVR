@@ -26,6 +26,9 @@ import com.mechrobotix.chihuahua.demo.DemoSequence
 import com.mechrobotix.chihuahua.experience.HotspotGazeCandidate
 import com.mechrobotix.chihuahua.experience.HotspotGazeTracker
 import com.mechrobotix.chihuahua.haptics.VestHapticCoordinator
+import com.mechrobotix.chihuahua.travel.TravelMapController
+import com.mechrobotix.chihuahua.ui.AmbientParticleStyle
+import com.mechrobotix.chihuahua.ui.AmbientParticlesPanel
 import com.mechrobotix.chihuahua.ui.BrandLogoPanel
 import com.mechrobotix.chihuahua.ui.Chihuahua360Panel
 import com.mechrobotix.chihuahua.ui.DemoControlPanel
@@ -34,6 +37,7 @@ import com.mechrobotix.chihuahua.ui.HotspotMarkerPanel
 import com.mechrobotix.chihuahua.ui.SceneToolbarPanel
 import com.mechrobotix.chihuahua.ui.SceneTransitionPanel
 import com.mechrobotix.chihuahua.ui.SceneTransitionStyle
+import com.mechrobotix.chihuahua.ui.PortalDepthLayerPanel
 import com.meta.spatial.compose.ComposeFeature
 import com.meta.spatial.compose.ComposeViewPanelRegistration
 import com.meta.spatial.core.Color4
@@ -80,6 +84,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlin.math.abs
+import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.max
 import kotlin.math.sin
@@ -93,6 +98,7 @@ class Chihuahua360Activity : AppSystemActivity() {
 
     private val vestBleManager by lazy { VestBleManager(applicationContext) }
     private val vestHaptics by lazy { VestHapticCoordinator(vestBleManager) }
+    private val travelMapController = TravelMapController()
 
     private val _selectedDestination = MutableStateFlow<Destination?>(null)
     private val selectedDestination: StateFlow<Destination?> = _selectedDestination.asStateFlow()
@@ -122,6 +128,10 @@ class Chihuahua360Activity : AppSystemActivity() {
     private val sceneTransitionColorProgress: StateFlow<Float> = _sceneTransitionColorProgress.asStateFlow()
     private val _sceneTransitionShowBrand = MutableStateFlow(false)
     private val sceneTransitionShowBrand: StateFlow<Boolean> = _sceneTransitionShowBrand.asStateFlow()
+    private val _ambientParticleStyle = MutableStateFlow(AmbientParticleStyle.NONE)
+    private val ambientParticleStyle: StateFlow<AmbientParticleStyle> = _ambientParticleStyle.asStateFlow()
+    private val _ambientParticleAccent = MutableStateFlow(DEFAULT_PORTAL_ACCENT)
+    private val ambientParticleAccent: StateFlow<Long> = _ambientParticleAccent.asStateFlow()
     private val hotspotMarkerStates = List(MAX_HOTSPOTS) {
         MutableStateFlow<HotspotMarkerState?>(null)
     }
@@ -132,7 +142,10 @@ class Chihuahua360Activity : AppSystemActivity() {
     private var sceneToolbarEntity: Entity? = null
     private var hotspotInfoEntity: Entity? = null
     private var sceneTransitionEntity: Entity? = null
+    private var sceneTransitionAnchorPose = Pose()
     private var demoControlEntity: Entity? = null
+    private val portalDepthEntities = MutableList<Entity?>(PORTAL_DEPTH_PANEL_IDS.size) { null }
+    private val ambientParticleEntities = MutableList<Entity?>(AMBIENT_PARTICLE_PANEL_IDS.size) { null }
     private val hotspotMarkerEntities = MutableList<Entity?>(MAX_HOTSPOTS) { null }
     private var mainPanelVisible = true
     private var hotspotPanelVisible = false
@@ -147,13 +160,13 @@ class Chihuahua360Activity : AppSystemActivity() {
     private var sceneTransitionGeneration = 0
     private var hotspotGazeJob: Job? = null
     private var hotspotAttentionJob: Job? = null
+    private var hotspotRevealJob: Job? = null
     private var manualHotspotUnlockJob: Job? = null
     private var hotspotNarrationJob: Job? = null
     private var transitionSoundPlayer: MediaPlayer? = null
     private val hotspotGazeTracker = HotspotGazeTracker()
     private var hotspotMarkersVisible = false
     private var manualHotspotsUnlocked = false
-    private var manualGazeRearmIndex: Int? = null
     private var currentSceneAccentArgb = DEFAULT_PORTAL_ACCENT
     private var resetLobbyOnStart = false
 
@@ -162,6 +175,7 @@ class Chihuahua360Activity : AppSystemActivity() {
             destinations = DestinationRepository.destinations,
             sequence = DemoSequence.complete,
             scope = sceneTransitionScope,
+            onTravelToDestination = ::travelToDemoDestination,
             onPresentDestination = ::presentDemoDestination,
             onNarrateAndAwait = ::playNarrationAndAwait,
             onFinished = ::finishDemoSequence,
@@ -209,6 +223,8 @@ class Chihuahua360Activity : AppSystemActivity() {
             ),
         )
 
+        travelMapController.create(DestinationRepository.destinations)
+
         val mainPanel = Entity.createPanelEntity(
             R.id.main_panel,
             Transform(MAIN_PANEL_POSE),
@@ -246,6 +262,18 @@ class Chihuahua360Activity : AppSystemActivity() {
             R.id.scene_transition_panel,
             Transform(SCENE_TRANSITION_POSE),
         ).also(::disablePanelHitTesting)
+        PORTAL_DEPTH_PANEL_IDS.forEachIndexed { index, panelId ->
+            portalDepthEntities[index] = Entity.createPanelEntity(
+                panelId,
+                Transform(portalDepthPose(index, progress = 0f)),
+            ).also(::disablePanelHitTesting)
+        }
+        AMBIENT_PARTICLE_PANEL_IDS.forEachIndexed { index, panelId ->
+            ambientParticleEntities[index] = Entity.createPanelEntity(
+                panelId,
+                Transform(ambientParticlePose(index)),
+            ).also(::disablePanelHitTesting)
+        }
         demoControlEntity = Entity.createPanelEntity(
             R.id.demo_control_panel,
             Transform(DEMO_CONTROL_POSE),
@@ -257,6 +285,8 @@ class Chihuahua360Activity : AppSystemActivity() {
         setPanelVisibility(hotspotInfoEntity, visible = false)
         setHotspotMarkersVisible(false)
         setPanelVisibility(sceneTransitionEntity, visible = false)
+        setPortalDepthVisible(false)
+        setAmbientParticlesVisible(false)
         setPanelVisibility(demoControlEntity, visible = false)
         Log.i(TAG, "Escena lista en modo lobby")
     }
@@ -419,6 +449,60 @@ class Chihuahua360Activity : AppSystemActivity() {
             )
         }
 
+        val portalDepthPanels = PORTAL_DEPTH_PANEL_IDS.mapIndexed { index, panelId ->
+            ComposeViewPanelRegistration(
+                panelId,
+                composeViewCreator = { _, context ->
+                    ComposeView(context).apply {
+                        setBackgroundColor(android.graphics.Color.TRANSPARENT)
+                        setContent {
+                            PortalDepthLayerPanel(
+                                alpha = sceneTransitionAlpha,
+                                fromAccentArgb = sceneTransitionFromAccent,
+                                toAccentArgb = sceneTransitionToAccent,
+                                colorProgress = sceneTransitionColorProgress,
+                                layerIndex = index,
+                            )
+                        }
+                    }
+                },
+                settingsCreator = {
+                    UIPanelSettings(
+                        shape = QuadShapeOptions(width = 3.7f, height = 3.7f),
+                        style = PanelStyleOptions(themeResourceId = R.style.Theme_Transparent),
+                        display = DpPerMeterDisplayOptions(dpPerMeter = 210f, resolutionScale = 1f),
+                        rendering = UIPanelRenderOptions(renderMode = PanelRenderMode.Mesh()),
+                    )
+                },
+            )
+        }
+
+        val ambientParticlePanels = AMBIENT_PARTICLE_PANEL_IDS.mapIndexed { index, panelId ->
+            ComposeViewPanelRegistration(
+                panelId,
+                composeViewCreator = { _, context ->
+                    ComposeView(context).apply {
+                        setBackgroundColor(android.graphics.Color.TRANSPARENT)
+                        setContent {
+                            AmbientParticlesPanel(
+                                style = ambientParticleStyle,
+                                accentArgb = ambientParticleAccent,
+                                phaseOffset = index * 0.19f,
+                            )
+                        }
+                    }
+                },
+                settingsCreator = {
+                    UIPanelSettings(
+                        shape = QuadShapeOptions(width = 4.4f, height = 3.0f),
+                        style = PanelStyleOptions(themeResourceId = R.style.Theme_Transparent),
+                        display = DpPerMeterDisplayOptions(dpPerMeter = 120f, resolutionScale = 1f),
+                        rendering = UIPanelRenderOptions(renderMode = PanelRenderMode.Mesh()),
+                    )
+                },
+            )
+        }
+
         val transitionPanel = ComposeViewPanelRegistration(
             R.id.scene_transition_panel,
             composeViewCreator = { _, context ->
@@ -448,11 +532,12 @@ class Chihuahua360Activity : AppSystemActivity() {
             },
         )
 
-        return applicationPanels + markerPanels + transitionPanel
+        return applicationPanels + markerPanels + portalDepthPanels + ambientParticlePanels + transitionPanel
     }
 
     private fun selectDestination(destination: Destination) {
         if (demoDirector.isRunning) return
+        val previousDestination = _selectedDestination.value?.takeIf { it.id != destination.id }
         vestHaptics.cancel(forceStop = true)
         narrationController?.stop()
         manualHotspotUnlockJob?.cancel()
@@ -467,29 +552,54 @@ class Chihuahua360Activity : AppSystemActivity() {
         setPanelVisibility(sceneToolbarEntity, visible = false)
         setHotspotMarkersVisible(false)
 
-        launchSceneTransition(
-            spec = INTERACTIVE_TRANSITION,
-            style = SceneTransitionStyle.PORTAL,
-            title = null,
-            subtitle = null,
-            targetAccentArgb = destination.accentArgb,
-            onSceneCovered = {
+        sceneTransitionJob?.cancel()
+        sceneTransitionJob = sceneTransitionScope.launch {
+            if (previousDestination != null) {
+                clearAmbientParticles()
                 stopAmbientAudio()
-                updateEnvironmentTexture(destination.panoramaRes)
-                playAmbientAudio(destination)
-            },
-            onTransitionFinished = {
-                setPanelVisibility(sceneToolbarEntity, visible = true)
-                setHotspotMarkersVisible(true)
-                vestHaptics.playDestination(destination.hapticEffectId)
+                animateTravelBackdrop(
+                    from = _sceneTransitionAlpha.value.coerceIn(0f, 1f),
+                    to = TRAVEL_MAP_DIM_ALPHA,
+                    durationMs = TRAVEL_MAP_DIM_MS,
+                )
+                val viewerPose = runCatching { scene.getViewerPose() }.getOrNull()
+                travelMapController.playJourney(previousDestination, destination, viewerPose)
+                if (!isActive) return@launch
+            } else {
+                travelMapController.hideImmediately()
+            }
+
+            performSceneTransition(
+                spec = DEMO_TRANSITION,
+                style = SceneTransitionStyle.PORTAL,
+                title = destination.title,
+                subtitle = destination.category,
+                targetAccentArgb = destination.accentArgb,
+                showBrand = true,
+                onSceneCovered = {
+                    stopAmbientAudio()
+                    updateEnvironmentTexture(destination.panoramaRes)
+                    playAmbientAudio(destination)
+                    configureAmbientParticles(destination)
+                },
+            )
+            if (!isActive || demoDirector.isRunning || _selectedDestination.value?.id != destination.id) return@launch
+
+            setPanelVisibility(sceneToolbarEntity, visible = true)
+            setHotspotMarkersVisible(true)
+            vestHaptics.playDestination(destination.hapticEffectId)
+            hotspotRevealJob?.cancel()
+            hotspotRevealJob = sceneTransitionScope.launch {
+                revealHotspotMarkersCinematically(destination)
+                if (!isActive || demoDirector.isRunning || _selectedDestination.value?.id != destination.id) return@launch
                 if (_narrationEnabled.value) {
                     playDestinationNarrationAndUnlock(destination)
                 } else {
                     unlockManualHotspots()
                 }
                 Log.i(TAG, "Destino activo: ${destination.id}")
-            },
-        )
+            }
+        }
     }
 
     private fun startDemo() {
@@ -506,9 +616,41 @@ class Chihuahua360Activity : AppSystemActivity() {
         setPanelVisibility(brandLogoEntity, visible = false)
         setPanelVisibility(sceneToolbarEntity, visible = false)
         setHotspotMarkersVisible(false)
+        travelMapController.hideImmediately()
         setPanelVisibility(demoControlEntity, visible = true)
         demoDirector.start()
         Log.i(TAG, "Recorrido guiado iniciado")
+    }
+
+    private suspend fun travelToDemoDestination(
+        previousDestination: Destination?,
+        destination: Destination,
+        index: Int,
+        total: Int,
+    ) {
+        vestHaptics.cancel(forceStop = true)
+        narrationController?.stop()
+        closeHotspotInfo(stopNarration = false, restoreToolbar = false)
+        setHotspotMarkersVisible(false)
+        setHotspotInteractionEnabled(false)
+        clearAmbientParticles()
+        stopAmbientAudio()
+        setMainPanelVisible(false)
+        setPanelVisibility(brandLogoEntity, visible = false)
+        setPanelVisibility(sceneToolbarEntity, visible = false)
+        setPanelVisibility(demoControlEntity, visible = false)
+
+        animateTravelBackdrop(
+            from = _sceneTransitionAlpha.value.coerceIn(0f, 1f),
+            to = TRAVEL_MAP_DIM_ALPHA,
+            durationMs = TRAVEL_MAP_DIM_MS,
+        )
+        val viewerPose = runCatching { scene.getViewerPose() }.getOrNull()
+        travelMapController.playJourney(previousDestination, destination, viewerPose)
+        Log.i(
+            TAG,
+            "Viaje demo ${index + 1}/$total: ${previousDestination?.id ?: "inicio"} -> ${destination.id}",
+        )
     }
 
     private suspend fun presentDemoDestination(
@@ -526,7 +668,7 @@ class Chihuahua360Activity : AppSystemActivity() {
         setPanelVisibility(brandLogoEntity, visible = false)
         setPanelVisibility(sceneToolbarEntity, visible = false)
         setHotspotMarkersVisible(false)
-        setPanelVisibility(demoControlEntity, visible = true)
+        setPanelVisibility(demoControlEntity, visible = false)
 
         performDemoSceneTransition(
             spec = DEMO_TRANSITION,
@@ -537,11 +679,13 @@ class Chihuahua360Activity : AppSystemActivity() {
                 stopAmbientAudio()
                 updateEnvironmentTexture(destination.panoramaRes)
                 playAmbientAudio(destination)
+                configureAmbientParticles(destination)
             },
         )
 
-        setHotspotInteractionEnabled(true)
         setHotspotMarkersVisible(true)
+        revealHotspotMarkersCinematically(destination)
+        setHotspotInteractionEnabled(true)
         when (DemoSequence.hapticMode) {
             DemoHapticMode.OFF -> Unit
             DemoHapticMode.VIBRATION_ONLY -> vestHaptics.playDestination(
@@ -574,6 +718,8 @@ class Chihuahua360Activity : AppSystemActivity() {
         stopDemoMusic(fadeOut = true)
         narrationController?.stop()
         setHotspotMarkersVisible(false)
+        travelMapController.hideImmediately()
+        setPanelVisibility(demoControlEntity, visible = false)
         performSceneTransition(
             spec = DEMO_FINISH_TRANSITION,
             style = SceneTransitionStyle.PORTAL,
@@ -585,6 +731,7 @@ class Chihuahua360Activity : AppSystemActivity() {
                 stopAmbientAudio()
                 _selectedDestination.value = null
                 clearHotspotMarkers()
+                clearAmbientParticles()
                 updateEnvironmentTexture(R.drawable.lobby_environment)
             },
         )
@@ -600,6 +747,7 @@ class Chihuahua360Activity : AppSystemActivity() {
         vestHaptics.cancel(forceStop = true)
         stopDemoMusic(fadeOut = false)
         narrationController?.stop()
+        travelMapController.hideImmediately()
         setPanelVisibility(demoControlEntity, visible = false)
         returnToLobbyInternal()
         Log.i(TAG, "Recorrido guiado cancelado")
@@ -623,7 +771,6 @@ class Chihuahua360Activity : AppSystemActivity() {
             total = destination.hotspots.size,
         )
         _selectedHotspot.value = presentation
-        manualGazeRearmIndex = index
         hotspotMarkerStates.getOrNull(index)?.let { stateFlow ->
             stateFlow.value = stateFlow.value?.copy(
                 discovered = true,
@@ -746,6 +893,7 @@ class Chihuahua360Activity : AppSystemActivity() {
 
     private fun returnToLobbyInternal() {
         vestHaptics.cancel(forceStop = true)
+        travelMapController.hideImmediately()
         manualHotspotUnlockJob?.cancel()
         manualHotspotUnlockJob = null
         manualHotspotsUnlocked = false
@@ -767,6 +915,7 @@ class Chihuahua360Activity : AppSystemActivity() {
                 stopAmbientAudio()
                 _selectedDestination.value = null
                 clearHotspotMarkers()
+                clearAmbientParticles()
                 updateEnvironmentTexture(R.drawable.lobby_environment)
             },
             onTransitionFinished = {
@@ -818,7 +967,8 @@ class Chihuahua360Activity : AppSystemActivity() {
     }
 
     private fun prepareHotspotMarkers(destination: Destination) {
-        manualGazeRearmIndex = null
+        hotspotRevealJob?.cancel()
+        hotspotRevealJob = null
         hotspotGazeTracker.reset()
         hotspotMarkerStates.forEachIndexed { index, state ->
             val hotspot = destination.hotspots.getOrNull(index)
@@ -830,6 +980,7 @@ class Chihuahua360Activity : AppSystemActivity() {
                         index = index,
                         total = destination.hotspots.size,
                     ),
+                    revealProgress = 0f,
                 )
             }
             hotspotMarkerEntities[index]?.setComponent(
@@ -838,8 +989,50 @@ class Chihuahua360Activity : AppSystemActivity() {
         }
     }
 
+    private suspend fun revealHotspotMarkersCinematically(destination: Destination) = coroutineScope {
+        destination.hotspots.take(MAX_HOTSPOTS).forEachIndexed { index, hotspot ->
+            launch {
+                delay(index * HOTSPOT_REVEAL_STAGGER_MS)
+                val entity = hotspotMarkerEntities.getOrNull(index) ?: return@launch
+                val stateFlow = hotspotMarkerStates.getOrNull(index) ?: return@launch
+                val finalPose = markerPose(hotspot, index)
+                val startPosition = Vector3(
+                    HOTSPOT_REVEAL_START_X + (index - 1) * HOTSPOT_REVEAL_START_STAGGER_X,
+                    HOTSPOT_REVEAL_START_Y,
+                    HOTSPOT_REVEAL_START_Z,
+                )
+                val startedAt = SystemClock.uptimeMillis()
+                while (isActive) {
+                    val elapsed = SystemClock.uptimeMillis() - startedAt
+                    val fraction = (elapsed.toFloat() / HOTSPOT_REVEAL_DURATION_MS.toFloat()).coerceIn(0f, 1f)
+                    val eased = fraction * fraction * (3f - 2f * fraction)
+                    val arc = sin(Math.PI * eased).toFloat() * HOTSPOT_REVEAL_ARC_HEIGHT
+                    val position = Vector3(
+                        startPosition.x + (finalPose.t.x - startPosition.x) * eased,
+                        startPosition.y + (finalPose.t.y - startPosition.y) * eased + arc,
+                        startPosition.z + (finalPose.t.z - startPosition.z) * eased,
+                    )
+                    entity.setComponent(
+                        Transform(
+                            Pose(
+                                position,
+                                Quaternion(0f, 180f + hotspot.yaw, 0f),
+                            ),
+                        ),
+                    )
+                    stateFlow.value = stateFlow.value?.copy(revealProgress = eased)
+                    if (fraction >= 1f) break
+                    delay(TRANSITION_FRAME_MS)
+                }
+                entity.setComponent(Transform(finalPose))
+                stateFlow.value = stateFlow.value?.copy(revealProgress = 1f)
+            }
+        }
+    }
+
     private fun clearHotspotMarkers() {
-        manualGazeRearmIndex = null
+        hotspotRevealJob?.cancel()
+        hotspotRevealJob = null
         hotspotGazeTracker.reset()
         hotspotMarkerStates.forEach { it.value = null }
         setHotspotMarkersVisible(false)
@@ -864,7 +1057,14 @@ class Chihuahua360Activity : AppSystemActivity() {
             setPanelVisibility(entity, visible && markerAvailable)
         }
         if (visible) {
-            startHotspotGazeTracking()
+            if (demoDirector.isRunning) {
+                startHotspotGazeTracking()
+            } else {
+                hotspotGazeJob?.cancel()
+                hotspotGazeJob = null
+                hotspotGazeTracker.reset()
+                clearHotspotGazeVisuals()
+            }
             startHotspotAttentionCycle()
         } else {
             hotspotGazeJob?.cancel()
@@ -906,9 +1106,14 @@ class Chihuahua360Activity : AppSystemActivity() {
     }
 
     private fun startHotspotGazeTracking() {
+        if (!demoDirector.isRunning) return
         if (hotspotGazeJob?.isActive == true) return
         hotspotGazeJob = sceneTransitionScope.launch {
             while (isActive) {
+                if (!demoDirector.isRunning) {
+                    clearHotspotGazeVisuals()
+                    return@launch
+                }
                 if (!hotspotMarkersVisible) {
                     delay(GAZE_POLL_MS)
                     continue
@@ -931,18 +1136,11 @@ class Chihuahua360Activity : AppSystemActivity() {
                         markerPosition.z - viewerPose.t.z,
                     ).normalize()
                     val angularError = forward.angleBetweenDegrees(targetDirection)
-                    if (
-                        !demoDirector.isRunning &&
-                        manualGazeRearmIndex == index &&
-                        angularError > GAZE_REARM_EXIT_DEGREES
-                    ) {
-                        manualGazeRearmIndex = null
-                    }
                     HotspotGazeCandidate(
                         index = index,
                         yaw = angularError,
                         pitch = 0f,
-                        enabled = state.enabled && (demoDirector.isRunning || manualGazeRearmIndex != index),
+                        enabled = state.enabled,
                     )
                 }
                 val update = hotspotGazeTracker.update(
@@ -987,23 +1185,20 @@ class Chihuahua360Activity : AppSystemActivity() {
         val state = stateFlow.value ?: return
         if (!state.enabled) return
         val presentation = state.presentation
-        if (demoDirector.isRunning) {
-            stateFlow.value = state.copy(
-                enabled = false,
-                discovered = true,
-                isGazed = false,
-                gazeProgress = 0f,
-                attention = false,
-            )
-            vestHaptics.playHotspot(
-                effectId = presentation.hotspot.hapticEffectId,
-                yaw = presentation.hotspot.yaw,
-                includeThermal = false,
-            )
-            Log.i(TAG, "Punto demo descubierto: ${presentation.hotspot.id}")
-        } else {
-            showHotspot(presentation.destination, presentation.hotspot)
-        }
+        if (!demoDirector.isRunning) return
+        stateFlow.value = state.copy(
+            enabled = false,
+            discovered = true,
+            isGazed = false,
+            gazeProgress = 0f,
+            attention = false,
+        )
+        vestHaptics.playHotspot(
+            effectId = presentation.hotspot.hapticEffectId,
+            yaw = presentation.hotspot.yaw,
+            includeThermal = false,
+        )
+        Log.i(TAG, "Punto demo descubierto: ${presentation.hotspot.id}")
     }
 
     private fun markerPose(hotspot: Hotspot, index: Int = 0): Pose {
@@ -1141,6 +1336,26 @@ class Chihuahua360Activity : AppSystemActivity() {
         }
     }
 
+    private suspend fun animateTravelBackdrop(
+        from: Float,
+        to: Float,
+        durationMs: Long,
+    ) {
+        val startedAt = SystemClock.uptimeMillis()
+        while (true) {
+            val elapsed = SystemClock.uptimeMillis() - startedAt
+            val fraction = if (durationMs <= 0L) 1f else {
+                (elapsed.toFloat() / durationMs.toFloat()).coerceIn(0f, 1f)
+            }
+            val eased = fraction * fraction * (3f - 2f * fraction)
+            val value = from + (to - from) * eased
+            _sceneTransitionAlpha.value = value
+            setEnvironmentTransitionDarkness(value)
+            if (fraction >= 1f) return
+            delay(TRANSITION_FRAME_MS)
+        }
+    }
+
     private suspend fun performDemoSceneTransition(
         spec: SceneTransitionSpec,
         title: String,
@@ -1178,6 +1393,10 @@ class Chihuahua360Activity : AppSystemActivity() {
                 )
             } finally {
                 finishSceneTransition(generation)
+                setPanelVisibility(
+                    demoControlEntity,
+                    visible = demoDirector.isRunning,
+                )
             }
         }
         delay(DEMO_NARRATION_OPEN_LEAD_MS)
@@ -1198,8 +1417,15 @@ class Chihuahua360Activity : AppSystemActivity() {
         _sceneTransitionToAccent.value = targetAccentArgb
         _sceneTransitionColorProgress.value = 0f
         _sceneTransitionShowBrand.value = showBrand
+        recenterTransitionVisualsToViewer()
         setPanelVisibility(sceneTransitionEntity, visible = true)
-        if (style == SceneTransitionStyle.PORTAL) playTransitionSound()
+        if (style == SceneTransitionStyle.PORTAL) {
+            updatePortalDepth(_sceneTransitionAlpha.value)
+            setPortalDepthVisible(true)
+            playTransitionSound()
+        } else {
+            setPortalDepthVisible(false)
+        }
         return generation
     }
 
@@ -1212,6 +1438,7 @@ class Chihuahua360Activity : AppSystemActivity() {
         _sceneTransitionSubtitle.value = null
         _sceneTransitionShowBrand.value = false
         setPanelVisibility(sceneTransitionEntity, visible = false)
+        setPortalDepthVisible(false)
     }
 
     private suspend fun animateTransitionAlpha(
@@ -1232,6 +1459,9 @@ class Chihuahua360Activity : AppSystemActivity() {
             val transitionAlpha = from + (to - from) * easedFraction
             _sceneTransitionAlpha.value = transitionAlpha
             setEnvironmentTransitionDarkness(transitionAlpha)
+            if (_sceneTransitionStyle.value == SceneTransitionStyle.PORTAL) {
+                updatePortalDepth(transitionAlpha)
+            }
             if (animateColor) {
                 _sceneTransitionColorProgress.value = easedFraction
             }
@@ -1297,6 +1527,91 @@ class Chihuahua360Activity : AppSystemActivity() {
             material.baseColor = Color4(brightness, brightness, brightness, 1f)
             environmentEntity?.setComponent(material)
         }
+    }
+
+    private fun configureAmbientParticles(destination: Destination) {
+        _ambientParticleAccent.value = destination.accentArgb
+        _ambientParticleStyle.value = when (destination.id) {
+            "samalayuca" -> AmbientParticleStyle.DESERT
+            "creel-arareko" -> AmbientParticleStyle.FOREST
+            "basaseachi" -> AmbientParticleStyle.WATER
+            "chepe" -> AmbientParticleStyle.RAIL
+            "paquime", "parral" -> AmbientParticleStyle.HERITAGE
+            "centro-chihuahua" -> AmbientParticleStyle.CITY
+            "barrancas-cobre", "batopilas", "sinforosa" -> AmbientParticleStyle.CANYON
+            else -> AmbientParticleStyle.CANYON
+        }
+        setAmbientParticlesVisible(true)
+    }
+
+    private fun clearAmbientParticles() {
+        _ambientParticleStyle.value = AmbientParticleStyle.NONE
+        setAmbientParticlesVisible(false)
+    }
+
+    private fun setAmbientParticlesVisible(visible: Boolean) {
+        ambientParticleEntities.forEach { setPanelVisibility(it, visible) }
+    }
+
+    private fun setPortalDepthVisible(visible: Boolean) {
+        portalDepthEntities.forEach { setPanelVisibility(it, visible) }
+    }
+
+    private fun recenterTransitionVisualsToViewer() {
+        sceneTransitionAnchorPose = runCatching {
+            scene.getViewerPose().removePitchAndRoll()
+        }.getOrElse {
+            FALLBACK_VIEWER_POSE
+        }
+        sceneTransitionEntity?.setComponent(
+            Transform(
+                panelPoseInFront(
+                    anchor = sceneTransitionAnchorPose,
+                    distance = SCENE_TRANSITION_DISTANCE,
+                    verticalOffset = SCENE_TRANSITION_VERTICAL_OFFSET,
+                ),
+            ),
+        )
+        updatePortalDepth(_sceneTransitionAlpha.value)
+    }
+
+    private fun updatePortalDepth(progress: Float) {
+        portalDepthEntities.forEachIndexed { index, entity ->
+            entity?.setComponent(Transform(portalDepthPose(index, progress)))
+        }
+    }
+
+    private fun portalDepthPose(index: Int, progress: Float): Pose {
+        val clamped = progress.coerceIn(0f, 1f)
+        val distance = PORTAL_DEPTH_BASE_DISTANCE + index * PORTAL_DEPTH_SPACING_Z
+        val surge = clamped * (PORTAL_DEPTH_SURGE_Z + index * 0.05f)
+        return panelPoseInFront(
+            anchor = sceneTransitionAnchorPose,
+            distance = distance - surge,
+            verticalOffset = PORTAL_DEPTH_VERTICAL_OFFSET,
+        )
+    }
+
+    private fun panelPoseInFront(anchor: Pose, distance: Float, verticalOffset: Float): Pose {
+        val forward = anchor.forward().normalize()
+        val position = Vector3(
+            anchor.t.x + forward.x * distance,
+            anchor.t.y + verticalOffset,
+            anchor.t.z + forward.z * distance,
+        )
+        val yaw = Math.toDegrees(atan2(forward.x, forward.z).toDouble()).toFloat()
+        return Pose(position, Quaternion(0f, yaw + 180f, 0f))
+    }
+
+    private fun ambientParticlePose(index: Int): Pose {
+        val yaw = AMBIENT_PARTICLE_YAWS.getOrElse(index) { 0f }
+        val radians = Math.toRadians(yaw.toDouble())
+        val x = AMBIENT_PARTICLE_RADIUS * sin(radians).toFloat()
+        val z = AMBIENT_PARTICLE_RADIUS * cos(radians).toFloat()
+        return Pose(
+            Vector3(x, AMBIENT_PARTICLE_HEIGHT, z),
+            Quaternion(0f, 180f + yaw, 0f),
+        )
     }
 
     private fun sendManualCommand(command: VestCommand): Boolean = vestHaptics.sendManual(command)
@@ -1481,6 +1796,8 @@ class Chihuahua360Activity : AppSystemActivity() {
         hotspotGazeJob = null
         hotspotAttentionJob?.cancel()
         hotspotAttentionJob = null
+        hotspotRevealJob?.cancel()
+        hotspotRevealJob = null
         manualHotspotUnlockJob?.cancel()
         manualHotspotUnlockJob = null
         hotspotNarrationJob?.cancel()
@@ -1488,7 +1805,10 @@ class Chihuahua360Activity : AppSystemActivity() {
         transitionSoundPlayer?.runCatching { stop() }
         transitionSoundPlayer?.release()
         transitionSoundPlayer = null
+        travelMapController.destroy()
         hotspotMarkerEntities.forEach { it?.destroy() }
+        portalDepthEntities.forEach { it?.destroy() }
+        ambientParticleEntities.forEach { it?.destroy() }
         hotspotInfoEntity?.destroy()
         sceneToolbarEntity?.destroy()
         brandLogoEntity?.destroy()
@@ -1497,6 +1817,8 @@ class Chihuahua360Activity : AppSystemActivity() {
         demoControlEntity?.destroy()
         environmentEntity?.destroy()
         hotspotMarkerEntities.indices.forEach { hotspotMarkerEntities[it] = null }
+        portalDepthEntities.indices.forEach { portalDepthEntities[it] = null }
+        ambientParticleEntities.indices.forEach { ambientParticleEntities[it] = null }
         hotspotInfoEntity = null
         sceneToolbarEntity = null
         brandLogoEntity = null
@@ -1519,9 +1841,10 @@ class Chihuahua360Activity : AppSystemActivity() {
         hotspotNarrationJob?.cancel()
         hotspotNarrationJob = null
         manualHotspotsUnlocked = false
-        manualGazeRearmIndex = null
         _manualHotspotsEnabled.value = false
         clearHotspotMarkers()
+        clearAmbientParticles()
+        travelMapController.hideImmediately()
         updateEnvironmentTexture(R.drawable.lobby_environment)
         currentSceneAccentArgb = DEFAULT_PORTAL_ACCENT
         _sceneTransitionAlpha.value = 0f
@@ -1534,6 +1857,7 @@ class Chihuahua360Activity : AppSystemActivity() {
         _sceneTransitionColorProgress.value = 1f
         _sceneTransitionShowBrand.value = false
         setPanelVisibility(sceneTransitionEntity, visible = false)
+        setPortalDepthVisible(false)
         setPanelVisibility(sceneToolbarEntity, visible = false)
         setPanelVisibility(hotspotInfoEntity, visible = false)
         setPanelVisibility(demoControlEntity, visible = false)
@@ -1606,12 +1930,26 @@ class Chihuahua360Activity : AppSystemActivity() {
         private const val HOTSPOT_PANEL_BASE_HEIGHT = 1.34f
         private const val HOTSPOT_PANEL_MIN_HEIGHT = 1.12f
         private const val HOTSPOT_PANEL_MAX_HEIGHT = 1.82f
-        private const val GAZE_REARM_EXIT_DEGREES = 16.5f
         private const val GAZE_POLL_MS = 48L
         private const val HOTSPOT_ATTENTION_IDLE_MS = 2_600L
         private const val HOTSPOT_ATTENTION_PULSE_MS = 850L
+        private const val HOTSPOT_REVEAL_DURATION_MS = 520L
+        private const val HOTSPOT_REVEAL_STAGGER_MS = 170L
+        private const val HOTSPOT_REVEAL_START_X = 0f
+        private const val HOTSPOT_REVEAL_START_Y = 1.52f
+        private const val HOTSPOT_REVEAL_START_Z = 2.18f
+        private const val HOTSPOT_REVEAL_START_STAGGER_X = 0.08f
+        private const val HOTSPOT_REVEAL_ARC_HEIGHT = 0.16f
+        private const val PORTAL_DEPTH_BASE_DISTANCE = 2.05f
+        private const val PORTAL_DEPTH_SPACING_Z = 0.38f
+        private const val PORTAL_DEPTH_SURGE_Z = 0.32f
+        private const val PORTAL_DEPTH_VERTICAL_OFFSET = 0.24f
+        private const val AMBIENT_PARTICLE_RADIUS = 3.35f
+        private const val AMBIENT_PARTICLE_HEIGHT = 1.58f
         private const val PORTAL_SOUND_VOLUME = 0.30f
         private const val DEMO_NARRATION_OPEN_LEAD_MS = 180L
+        private const val TRAVEL_MAP_DIM_ALPHA = 0.54f
+        private const val TRAVEL_MAP_DIM_MS = 340L
         private const val DEFAULT_PORTAL_ACCENT = 0xFFD8A24AL
         private const val SKYBOX_BASE_BRIGHTNESS = 0.5f
         private val SKYBOX_BASE_COLOR = Color4(
@@ -1622,13 +1960,13 @@ class Chihuahua360Activity : AppSystemActivity() {
         )
         private const val TRANSITION_FRAME_MS = 16L
         private val INTERACTIVE_TRANSITION = SceneTransitionSpec(
-            fadeInMs = 260L,
-            coverHoldMs = 90L,
-            fadeOutMs = 390L,
+            fadeInMs = 460L,
+            coverHoldMs = 720L,
+            fadeOutMs = 620L,
         )
         private val DEMO_TRANSITION = SceneTransitionSpec(
             fadeInMs = 650L,
-            coverHoldMs = 220L,
+            coverHoldMs = 900L,
             fadeOutMs = 850L,
         )
         private val DEMO_FINISH_TRANSITION = SceneTransitionSpec(
@@ -1643,6 +1981,18 @@ class Chihuahua360Activity : AppSystemActivity() {
             R.id.hotspot_marker_2_panel,
             R.id.hotspot_marker_3_panel,
         )
+        private val PORTAL_DEPTH_PANEL_IDS = intArrayOf(
+            R.id.portal_depth_1_panel,
+            R.id.portal_depth_2_panel,
+            R.id.portal_depth_3_panel,
+        )
+        private val AMBIENT_PARTICLE_PANEL_IDS = intArrayOf(
+            R.id.ambient_particles_front_panel,
+            R.id.ambient_particles_right_panel,
+            R.id.ambient_particles_back_panel,
+            R.id.ambient_particles_left_panel,
+        )
+        private val AMBIENT_PARTICLE_YAWS = floatArrayOf(0f, 90f, 180f, -90f)
         private val MAIN_PANEL_POSE = Pose(
             Vector3(0f, 1.30f, 2.58f),
             Quaternion(0f, 180f, 0f),
@@ -1662,6 +2012,9 @@ class Chihuahua360Activity : AppSystemActivity() {
             Vector3(0f, 1.48f, 4.40f),
             Quaternion(0f, 180f, 0f),
         )
+        private const val SCENE_TRANSITION_DISTANCE = 4.40f
+        private const val SCENE_TRANSITION_VERTICAL_OFFSET = 0.24f
+        private val FALLBACK_VIEWER_POSE = Pose(Vector3(0f, 1.55f, 0f))
         private val DEMO_CONTROL_POSE = Pose(
             Vector3(0f, 0.66f, 2.36f),
             Quaternion(0f, 180f, 0f),

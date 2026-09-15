@@ -8,6 +8,8 @@ data class Destination(
     val title: String,
     val category: String,
     val summary: String,
+    val mapLatitude: Float,
+    val mapLongitude: Float,
     @DrawableRes val panoramaRes: Int,
     @DrawableRes val thumbnailRes: Int,
     @RawRes val ambientAudioRes: Int,

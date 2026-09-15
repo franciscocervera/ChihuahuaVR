@@ -70,10 +70,11 @@ fun DemoControlPanel(
                             fontWeight = FontWeight.Bold,
                         )
                         Text(
-                            text = if (state.phase == DemoPhase.FINISHING) {
-                                "Finalizando recorrido"
-                            } else {
-                                state.destinationTitle
+                            text = when (state.phase) {
+                                DemoPhase.TRAVELING -> "Viajando a ${state.destinationTitle}"
+                                DemoPhase.TRANSITIONING -> "Llegando a ${state.destinationTitle}"
+                                DemoPhase.FINISHING -> "Finalizando recorrido"
+                                else -> state.destinationTitle
                             },
                             color = Color.White,
                             fontSize = 20.sp,
