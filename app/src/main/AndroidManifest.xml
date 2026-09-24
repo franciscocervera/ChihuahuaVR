@@ -37,6 +37,7 @@
 
 
     <application
+        android:allowAudioPlaybackCapture="true"
         android:allowBackup="false"
         android:enableOnBackInvokedCallback="false"
         android:icon="@drawable/ic_launcher"

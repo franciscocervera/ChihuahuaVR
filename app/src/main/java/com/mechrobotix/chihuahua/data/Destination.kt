@@ -22,8 +22,7 @@ data class Destination(
 data class Hotspot(
     val id: String,
     val title: String,
-    val body: String,
-    val narrationFileName: String,
+    val summary: String,
     val yaw: Float,
     val pitch: Float,
     val hapticEffectId: String,

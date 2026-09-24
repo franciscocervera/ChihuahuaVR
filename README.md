@@ -1,15 +1,15 @@
-# Chihuahua 360 XR
+# ChihuahuaVR
 
-Aplicación inmersiva para Meta Quest construida con Meta Spatial SDK, Kotlin, Jetpack Compose y Android BLE GATT.
+Aplicación de realidad virtual para Meta Quest construida con Meta Spatial SDK, Kotlin, Jetpack Compose y Android BLE GATT.
 
 ## Funcionalidades
 
-- Lobby con recorrido guiado automático y tarjetas grandes para visitar destinos individuales.
+- Lobby con recorrido guiado y tarjetas para visitar destinos individuales.
 - Manejo de la interfaz mediante los controles de Meta Quest.
 - Paneles móviles y panoramas 360.
-- Marcadores flotantes para abrir puntos de interés desde el panorama.
-- Audio ambiental, narraciones locales y transiciones inmersivas entre escenas.
-- Mapa 3D de Chihuahua con marcadores y rutas luminosas entre destinos.
+- Hotspots flotantes que se descubren con la mirada.
+- Dron guía 3D.
+- Mapa 3D de Chihuahua.
 - Escaneo, conexión y comunicación Bluetooth con chaleco háptico.
 - Activación del chaleco háptico por destino y puntos de interés.
 - Panel de control para probar vibración y salidas térmicas.

@@ -14,5 +14,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Chihuahua360XR"
+rootProject.name = "ChihuahuaVR"
 include(":app")

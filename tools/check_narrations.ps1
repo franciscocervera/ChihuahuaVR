@@ -1,59 +1,23 @@
 $ErrorActionPreference = "Stop"
-$rawDirectory = Join-Path $PSScriptRoot "..\app\src\main\res\raw"
-$expectedFiles = @(
-    "narr_dest_barrancas_cobre.mp3"
-    "narr_hot_barrancas_cobre_sistema_canones.mp3"
-    "narr_hot_barrancas_cobre_presencia_raramuri.mp3"
-    "narr_hot_barrancas_cobre_divisadero.mp3"
-    "narr_dest_chepe.mp3"
-    "narr_hot_chepe_ruta_serrana.mp3"
-    "narr_hot_chepe_estaciones_clave.mp3"
-    "narr_hot_chepe_viaje_panoramico.mp3"
-    "narr_dest_centro_chihuahua.mp3"
-    "narr_hot_centro_chihuahua_catedral_metropolitana.mp3"
-    "narr_hot_centro_chihuahua_eje_civico.mp3"
-    "narr_hot_centro_chihuahua_museos_cercanos.mp3"
-    "narr_dest_paquime.mp3"
-    "narr_hot_paquime_arquitectura_tierra.mp3"
-    "narr_hot_paquime_intercambio_cultural.mp3"
-    "narr_hot_paquime_casas_grandes.mp3"
-    "narr_dest_samalayuca.mp3"
-    "narr_hot_samalayuca_mar_arena.mp3"
-    "narr_hot_samalayuca_aventura_dunas.mp3"
-    "narr_hot_samalayuca_area_protegida.mp3"
-    "narr_dest_creel_arareko.mp3"
-    "narr_hot_creel_arareko_creel.mp3"
-    "narr_hot_creel_arareko_lago_arareko.mp3"
-    "narr_hot_creel_arareko_valles_piedra.mp3"
-    "narr_dest_basaseachi.mp3"
-    "narr_hot_basaseachi_caida_principal.mp3"
-    "narr_hot_basaseachi_barranca_candamena.mp3"
-    "narr_hot_basaseachi_senderos_miradores.mp3"
-    "narr_dest_parral.mp3"
-    "narr_hot_parral_ciudad_plata.mp3"
-    "narr_hot_parral_palacio_alvarado.mp3"
-    "narr_hot_parral_memoria_villa.mp3"
-    "narr_dest_batopilas.mp3"
-    "narr_hot_batopilas_pueblo_barrancas.mp3"
-    "narr_hot_batopilas_rio_batopilas.mp3"
-    "narr_hot_batopilas_legado_minero.mp3"
+
+$expected = @(
+    "narr_dest_barrancas_cobre.mp3",
+    "narr_dest_chepe.mp3",
+    "narr_dest_centro_chihuahua.mp3",
+    "narr_dest_paquime.mp3",
+    "narr_dest_samalayuca.mp3",
+    "narr_dest_creel_arareko.mp3",
+    "narr_dest_basaseachi.mp3",
+    "narr_dest_parral.mp3",
+    "narr_dest_batopilas.mp3",
     "narr_dest_sinforosa.mp3"
-    "narr_hot_sinforosa_cumbres.mp3"
-    "narr_hot_sinforosa_rio_verde.mp3"
-    "narr_hot_sinforosa_paisaje_serrano.mp3"
 )
 
-$missingFiles = $expectedFiles | Where-Object {
-    -not (Test-Path (Join-Path $rawDirectory $_))
+$rawPath = Join-Path $PSScriptRoot "..\app\src\main\res\raw"
+$missing = $expected | Where-Object { -not (Test-Path (Join-Path $rawPath $_)) }
+
+if ($missing.Count -gt 0) {
+    Write-Error ("Faltan narraciones: " + ($missing -join ", "))
 }
 
-$presentCount = $expectedFiles.Count - $missingFiles.Count
-Write-Host "Narraciones presentes: $presentCount/$($expectedFiles.Count)"
-
-if ($missingFiles.Count -gt 0) {
-    Write-Host "Archivos pendientes:"
-    $missingFiles | ForEach-Object { Write-Host "  - $_" }
-    exit 1
-}
-
-Write-Host "Catálogo de narraciones completo."
+Write-Host "Catálogo de narraciones de destinos completo ($($expected.Count) archivos)."
