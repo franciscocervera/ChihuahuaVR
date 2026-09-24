@@ -13,8 +13,8 @@ android {
         applicationId = "com.mechrobotix.chihuahua.controller"
         minSdk = 34
         targetSdk = 34
-        versionCode = 29
-        versionName = "1.9.7"
+        versionCode = 32
+        versionName = "1.9.10"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 

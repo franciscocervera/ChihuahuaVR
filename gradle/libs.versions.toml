@@ -1,6 +1,6 @@
 [versions]
 spatialsdk = "0.13.2"
-agp = "9.4.0"
+agp = "9.4.1"
 kotlin = "2.2.10"
 coreKtx = "1.13.1"
 composeActivity = "1.9.2"

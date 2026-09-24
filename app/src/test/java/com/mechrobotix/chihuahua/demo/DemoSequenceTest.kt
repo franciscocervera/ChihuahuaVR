@@ -15,6 +15,8 @@ class DemoSequenceTest {
         assertEquals(destinationIds.toSet(), demoIds.toSet())
         assertEquals(demoIds.size, demoIds.distinct().size)
         assertTrue(DemoSequence.complete.all { it.holdAfterNarrationMs > 0L })
+        assertEquals(10_000L, DemoSequence.complete.sumOf { it.holdAfterNarrationMs })
+        assertEquals(DemoSequence.FINAL_READING_HOLD_MS, DemoSequence.complete.last().holdAfterNarrationMs)
         assertEquals(DemoHapticMode.VIBRATION_ONLY, DemoSequence.hapticMode)
     }
 }

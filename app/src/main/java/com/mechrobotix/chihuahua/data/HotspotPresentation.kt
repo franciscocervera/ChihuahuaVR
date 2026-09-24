@@ -4,5 +4,4 @@ data class HotspotPresentation(
     val destination: Destination,
     val hotspot: Hotspot,
     val index: Int,
-    val total: Int,
 )

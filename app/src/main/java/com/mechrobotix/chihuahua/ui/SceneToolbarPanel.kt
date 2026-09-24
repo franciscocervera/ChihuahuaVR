@@ -1,23 +1,18 @@
 package com.mechrobotix.chihuahua.ui
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -36,27 +31,21 @@ import com.mechrobotix.chihuahua.audio.NarrationProgress
 import com.mechrobotix.chihuahua.audio.NarrationStatus
 import com.mechrobotix.chihuahua.ble.VestBleManager
 import com.mechrobotix.chihuahua.data.Destination
-import com.mechrobotix.chihuahua.data.Hotspot
 import kotlinx.coroutines.flow.StateFlow
 
 @Composable
 fun SceneToolbarPanel(
     selectedDestination: StateFlow<Destination?>,
-    narrationEnabled: StateFlow<Boolean>,
     narrationStatus: StateFlow<NarrationStatus>,
     narrationProgress: StateFlow<NarrationProgress>,
-    hotspotsEnabled: StateFlow<Boolean>,
     vestBleManager: VestBleManager,
     onOpenMenu: () -> Unit,
     onReturnToLobby: () -> Unit,
-    onHotspotSelected: (Destination, Hotspot) -> Unit,
     onToggleNarration: () -> Unit,
 ) {
     val destination by selectedDestination.collectAsState()
-    val automaticNarration by narrationEnabled.collectAsState()
     val voiceStatus by narrationStatus.collectAsState()
     val voiceProgress by narrationProgress.collectAsState()
-    val hotspotAccess by hotspotsEnabled.collectAsState()
     val vestState by vestBleManager.state.collectAsState()
     val activeDestination = destination ?: return
     val accent = Color(activeDestination.accentArgb)
@@ -125,7 +114,7 @@ fun SceneToolbarPanel(
                         shape = RoundedCornerShape(14.dp),
                     ) {
                         Text(
-                            text = narrationLabel(voiceStatus, automaticNarration),
+                            text = narrationLabel(voiceStatus),
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold,
                         )
@@ -150,90 +139,16 @@ fun SceneToolbarPanel(
                     accent = accent,
                     modifier = Modifier.fillMaxWidth(),
                 )
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    activeDestination.hotspots.forEachIndexed { index, hotspot ->
-                        Button(
-                            onClick = { onHotspotSelected(activeDestination, hotspot) },
-                            enabled = hotspotAccess,
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(88.dp),
-                            shape = RoundedCornerShape(16.dp),
-                            border = BorderStroke(2.dp, accent.copy(alpha = 0.62f)),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color.White,
-                                contentColor = MaterialTheme.colorScheme.onSurface,
-                            ),
-                            contentPadding = androidx.compose.foundation.layout.PaddingValues(
-                                horizontal = 14.dp,
-                                vertical = 10.dp,
-                            ),
-                        ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(44.dp)
-                                        .background(accent, CircleShape),
-                                    contentAlignment = Alignment.Center,
-                                ) {
-                                    Text(
-                                        text = (index + 1).toString(),
-                                        color = Color.White,
-                                        fontSize = 20.sp,
-                                        fontWeight = FontWeight.ExtraBold,
-                                    )
-                                }
-                                Spacer(Modifier.width(12.dp))
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = hotspot.title,
-                                        fontSize = 18.sp,
-                                        lineHeight = 22.sp,
-                                        fontWeight = FontWeight.ExtraBold,
-                                        maxLines = 2,
-                                        overflow = TextOverflow.Ellipsis,
-                                    )
-                                    Text(
-                                        text = if (hotspotAccess) {
-                                            "Abrir punto de interés"
-                                        } else {
-                                            "Disponible al terminar la narración"
-                                        },
-                                        color = if (hotspotAccess) accent else MaterialTheme.colorScheme.onSurfaceVariant,
-                                        fontSize = 14.sp,
-                                        fontWeight = FontWeight.SemiBold,
-                                        maxLines = 1,
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
             }
         }
     }
 }
 
-private fun narrationLabel(
-    status: NarrationStatus,
-    automaticNarration: Boolean,
-): String = when (status) {
-    NarrationStatus.PREPARING -> "Cargando audio…"
-    NarrationStatus.PLAYING -> "Narrando…"
-    NarrationStatus.FILE_MISSING -> "Audio pendiente"
-    NarrationStatus.PLAYBACK_ERROR -> "Error de audio"
+private fun narrationLabel(status: NarrationStatus): String = when (status) {
+    NarrationStatus.PREPARING -> "Preparando narración…"
+    NarrationStatus.PLAYING -> "Detener narración"
     NarrationStatus.IDLE,
-    NarrationStatus.READY -> if (automaticNarration) {
-        "Narración activa"
-    } else {
-        "Narración pausada"
-    }
+    NarrationStatus.READY,
+    NarrationStatus.FILE_MISSING,
+    NarrationStatus.PLAYBACK_ERROR -> "Iniciar narración"
 }

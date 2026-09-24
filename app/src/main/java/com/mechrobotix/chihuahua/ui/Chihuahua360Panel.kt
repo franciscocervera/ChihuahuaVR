@@ -60,7 +60,6 @@ import com.mechrobotix.chihuahua.ble.VestConnectionPhase
 import com.mechrobotix.chihuahua.ble.VestDiagnosticEntry
 import com.mechrobotix.chihuahua.ble.VestDiagnosticLevel
 import com.mechrobotix.chihuahua.data.Destination
-import com.mechrobotix.chihuahua.data.Hotspot
 import com.mechrobotix.chihuahua.data.ThermalChannel
 import com.mechrobotix.chihuahua.data.VestHardware
 import java.time.Instant
@@ -81,7 +80,6 @@ fun Chihuahua360Panel(
     vestBleManager: VestBleManager,
     onDestinationSelected: (Destination) -> Unit,
     onStartDemo: () -> Unit,
-    onHotspotSelected: (Destination, Hotspot) -> Unit,
     onManualCommand: (VestCommand) -> Boolean,
     onManualAllOff: () -> Boolean,
     onRequestBluetoothPermissions: () -> Unit,
@@ -123,7 +121,6 @@ fun Chihuahua360Panel(
                             selected = selected,
                             onSelect = onDestinationSelected,
                             onStartDemo = onStartDemo,
-                            onHotspotSelected = onHotspotSelected,
                         )
                         MainSection.VEST -> VestSection(
                             manager = vestBleManager,
@@ -154,7 +151,7 @@ private fun Header(
     ) {
         Column {
             Text(
-                text = "Chihuahua 360",
+                text = "ChihuahuaVR",
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.ExtraBold,
             )
@@ -250,7 +247,6 @@ private fun DestinationSection(
     selected: Destination?,
     onSelect: (Destination) -> Unit,
     onStartDemo: () -> Unit,
-    onHotspotSelected: (Destination, Hotspot) -> Unit,
 ) {
     Column(Modifier.fillMaxSize()) {
         Text(
@@ -262,7 +258,7 @@ private fun DestinationSection(
             text = if (selected == null) {
                 "Inicia el recorrido guiado o explora un destino por tu cuenta."
             } else {
-                "Selecciona otro destino o activa un punto de interés del recorrido actual."
+                "Selecciona otro destino o consulta los puntos de interés del recorrido actual."
             },
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontSize = 17.sp,
@@ -323,7 +319,7 @@ private fun DestinationSection(
                 }
             }
             Spacer(Modifier.height(18.dp))
-            DestinationDetails(selected, onHotspotSelected)
+            DestinationDetails(selected)
         }
     }
 }
@@ -359,7 +355,7 @@ private fun GuidedTourCard(onStartDemo: () -> Unit) {
                     fontWeight = FontWeight.ExtraBold,
                 )
                 Text(
-                    text = "10 destinos · Narración principal · Aproximadamente 2:30 min",
+                    text = "10 destinos · Narración principal · Aproximadamente 3:30 min",
                     color = Color.White.copy(alpha = 0.76f),
                     fontSize = 16.sp,
                 )
@@ -445,7 +441,6 @@ private fun DestinationCard(
 @Composable
 private fun DestinationDetails(
     destination: Destination,
-    onHotspotSelected: (Destination, Hotspot) -> Unit,
 ) {
     val accent = Color(destination.accentArgb)
     Card(
@@ -500,7 +495,6 @@ private fun DestinationDetails(
                 LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     items(destination.hotspots, key = { it.id }) { hotspot ->
                         Card(
-                            onClick = { onHotspotSelected(destination, hotspot) },
                             modifier = Modifier.fillMaxWidth(),
                             colors = CardDefaults.cardColors(
                                 containerColor = MaterialTheme.colorScheme.surfaceVariant,
@@ -514,11 +508,11 @@ private fun DestinationDetails(
                                     verticalAlignment = Alignment.CenterVertically,
                                 ) {
                                     Text(hotspot.title, fontWeight = FontWeight.Bold, color = accent)
-                                    Text("Abrir y escuchar", color = accent, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                                    Text("Se descubre con la mirada", color = accent, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
                                 }
                                 Spacer(Modifier.height(4.dp))
                                 Text(
-                                    hotspot.body,
+                                    hotspot.summary,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     fontSize = 16.sp,
                                     lineHeight = 22.sp,

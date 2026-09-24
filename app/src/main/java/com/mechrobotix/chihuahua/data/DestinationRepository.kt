@@ -21,8 +21,7 @@ object DestinationRepository {
                 Hotspot(
                     id = "sistema-canones",
                     title = "Sistema de cañones",
-                    body = "Las Barrancas del Cobre reúnen profundos cañones de la Sierra Tarahumara. Entre los miradores y el fondo de las barrancas existen grandes cambios de altura, temperatura y vegetación, que dan forma a uno de los paisajes naturales más impresionantes del norte de México.",
-                    narrationFileName = "narr_hot_barrancas_cobre_sistema_canones.mp3",
+                    summary = "Las Barrancas del Cobre reúnen profundos cañones con grandes cambios de altura, clima y vegetación.",
                     yaw = -90f,
                     pitch = -4f,
                     hapticEffectId = "barrancas-canones",
@@ -30,8 +29,7 @@ object DestinationRepository {
                 Hotspot(
                     id = "presencia-raramuri",
                     title = "Presencia rarámuri",
-                    body = "Esta región es territorio de comunidades rarámuri, reconocidas por su estrecha relación con la sierra. Sus carreras tradicionales, textiles, trabajos de cestería y formas de organización comunitaria expresan una cultura viva, profundamente vinculada con el paisaje y sus recursos.",
-                    narrationFileName = "narr_hot_barrancas_cobre_presencia_raramuri.mp3",
+                    summary = "Las comunidades rarámuri mantienen una relación profunda con la sierra mediante tradiciones, oficios y vida comunitaria.",
                     yaw = 90f,
                     pitch = 3f,
                     hapticEffectId = "barrancas-raramuri",
@@ -39,8 +37,7 @@ object DestinationRepository {
                 Hotspot(
                     id = "divisadero",
                     title = "Divisadero",
-                    body = "Divisadero reúne algunos de los miradores más conocidos de la región. Desde aquí se observan amplias vistas de las barrancas y se puede acceder a senderos, actividades de aventura y rutas que conectan con Creel, Urique y otros destinos de la Sierra Tarahumara.",
-                    narrationFileName = "narr_hot_barrancas_cobre_divisadero.mp3",
+                    summary = "Divisadero reúne miradores con amplias vistas de las barrancas y conecta con senderos y rutas de la Sierra Tarahumara.",
                     yaw = 180f,
                     pitch = -3f,
                     hapticEffectId = "barrancas-divisadero",
@@ -64,8 +61,7 @@ object DestinationRepository {
                 Hotspot(
                     id = "ruta-serrana",
                     title = "Ruta serrana",
-                    body = "El Chepe conecta la costa del Pacífico con la Sierra Tarahumara mediante un recorrido ferroviario de gran valor paisajístico. Durante el viaje, el tren atraviesa barrancas, bosques, túneles y puentes construidos para superar el relieve montañoso de la región.",
-                    narrationFileName = "narr_hot_chepe_ruta_serrana.mp3",
+                    summary = "El Chepe atraviesa barrancas, bosques, túneles y puentes para superar el relieve montañoso de la Sierra Tarahumara.",
                     yaw = 90f,
                     pitch = -4f,
                     hapticEffectId = "chepe-ruta",
@@ -73,8 +69,7 @@ object DestinationRepository {
                 Hotspot(
                     id = "estaciones-clave",
                     title = "Estaciones clave",
-                    body = "Creel, Divisadero y Bahuichivo son estaciones importantes del recorrido. Desde ellas se puede acceder a miradores, pueblos serranos, hospedajes locales y rutas hacia comunidades, valles y otros paisajes representativos de la Sierra Tarahumara.",
-                    narrationFileName = "narr_hot_chepe_estaciones_clave.mp3",
+                    summary = "Creel, Divisadero y Bahuichivo conectan el tren con pueblos, miradores y rutas hacia distintos paisajes serranos.",
                     yaw = -90f,
                     pitch = 3f,
                     hapticEffectId = "chepe-estaciones",
@@ -82,8 +77,7 @@ object DestinationRepository {
                 Hotspot(
                     id = "viaje-panoramico",
                     title = "Viaje panorámico",
-                    body = "Las ventanas del tren convierten el trayecto en una experiencia panorámica. El paisaje cambia con la altitud y muestra curvas entre montañas, bosques de pino, profundos cañones y amplias vistas hacia la red de barrancas de la sierra.",
-                    narrationFileName = "narr_hot_chepe_viaje_panoramico.mp3",
+                    summary = "El paisaje del Chepe cambia con la altitud entre bosques, montañas y profundos cañones de la sierra.",
                     yaw = 180f,
                     pitch = -6f,
                     hapticEffectId = "chepe-panoramico",
@@ -107,8 +101,7 @@ object DestinationRepository {
                 Hotspot(
                     id = "catedral-metropolitana",
                     title = "Catedral Metropolitana",
-                    body = "La Catedral Metropolitana de Chihuahua domina la Plaza de Armas. Sus torres gemelas, su construcción en cantera y su fachada barroca la convierten en uno de los principales símbolos arquitectónicos y religiosos de la capital del estado.",
-                    narrationFileName = "narr_hot_centro_chihuahua_catedral_metropolitana.mp3",
+                    summary = "La Catedral Metropolitana destaca por sus torres gemelas, su cantera y su fachada barroca frente a la Plaza de Armas.",
                     yaw = 180f,
                     pitch = 4f,
                     hapticEffectId = "centro-catedral",
@@ -116,8 +109,7 @@ object DestinationRepository {
                 Hotspot(
                     id = "eje-civico",
                     title = "Eje cívico",
-                    body = "El Palacio de Gobierno, el Palacio Municipal y los portales del centro forman parte del eje cívico de la ciudad. En esta zona se concentra la vida pública y se conservan referencias a episodios importantes de la Independencia y la Revolución Mexicana.",
-                    narrationFileName = "narr_hot_centro_chihuahua_eje_civico.mp3",
+                    summary = "El Palacio de Gobierno, el Palacio Municipal y los portales concentran parte de la vida pública y la memoria histórica de la capital.",
                     yaw = 90f,
                     pitch = -4f,
                     hapticEffectId = "centro-eje",
@@ -125,8 +117,7 @@ object DestinationRepository {
                 Hotspot(
                     id = "museos-cercanos",
                     title = "Museos cercanos",
-                    body = "Quinta Gameros y Casa Chihuahua complementan el recorrido por el centro histórico. Estos espacios reúnen arquitectura, exposiciones y relatos sobre la historia regional, y se encuentran a poca distancia de las plazas principales de la ciudad.",
-                    narrationFileName = "narr_hot_centro_chihuahua_museos_cercanos.mp3",
+                    summary = "Quinta Gameros y Casa Chihuahua reúnen arquitectura, exposiciones y relatos sobre la historia y el patrimonio regional.",
                     yaw = -90f,
                     pitch = -3f,
                     hapticEffectId = "centro-museos",
@@ -150,8 +141,7 @@ object DestinationRepository {
                 Hotspot(
                     id = "arquitectura-tierra",
                     title = "Arquitectura de tierra",
-                    body = "Paquimé conserva muros de tierra, patios, plazas y sistemas hidráulicos que muestran una planificación urbana compleja. Sus construcciones fueron adaptadas a las condiciones del desierto chihuahuense y reflejan el conocimiento técnico de sus antiguos habitantes.",
-                    narrationFileName = "narr_hot_paquime_arquitectura_tierra.mp3",
+                    summary = "Paquimé conserva muros de tierra, patios, plazas y sistemas hidráulicos adaptados a las condiciones del desierto.",
                     yaw = 90f,
                     pitch = -2f,
                     hapticEffectId = "paquime-arquitectura",
@@ -159,8 +149,7 @@ object DestinationRepository {
                 Hotspot(
                     id = "intercambio-cultural",
                     title = "Intercambio cultural",
-                    body = "Paquimé fue un punto de contacto entre las tradiciones del suroeste de Norteamérica y Mesoamérica. Esta relación puede observarse en su cerámica, sus redes de comercio, su arquitectura y diversos elementos asociados con la vida ceremonial.",
-                    narrationFileName = "narr_hot_paquime_intercambio_cultural.mp3",
+                    summary = "Paquimé conectó tradiciones del suroeste de Norteamérica y Mesoamérica mediante comercio, cerámica y vida ceremonial.",
                     yaw = -90f,
                     pitch = 4f,
                     hapticEffectId = "paquime-intercambio",
@@ -168,8 +157,7 @@ object DestinationRepository {
                 Hotspot(
                     id = "casas-grandes",
                     title = "Casas Grandes",
-                    body = "El entorno de Casas Grandes complementa la visita a la zona arqueológica. En la región se conservan talleres artesanales, cerámica tradicional y expresiones contemporáneas que mantienen vivo el legado cultural de Paquimé.",
-                    narrationFileName = "narr_hot_paquime_casas_grandes.mp3",
+                    summary = "Casas Grandes mantiene vivo el legado de Paquimé mediante talleres artesanales, cerámica y expresiones culturales contemporáneas.",
                     yaw = 180f,
                     pitch = -5f,
                     hapticEffectId = "paquime-casas",
@@ -193,8 +181,7 @@ object DestinationRepository {
                 Hotspot(
                     id = "mar-arena",
                     title = "Mar de arena",
-                    body = "Los Médanos de Samalayuca forman un amplio paisaje de dunas claras dentro del Desierto Chihuahuense. Sus formas cambian constantemente por la acción del viento, creando relieves, sombras y texturas que varían a lo largo del día.",
-                    narrationFileName = "narr_hot_samalayuca_mar_arena.mp3",
+                    summary = "Las dunas de Samalayuca cambian continuamente con el viento, creando relieves, sombras y texturas en el Desierto Chihuahuense.",
                     yaw = -90f,
                     pitch = -5f,
                     hapticEffectId = "samalayuca-arena",
@@ -202,8 +189,7 @@ object DestinationRepository {
                 Hotspot(
                     id = "aventura-dunas",
                     title = "Aventura en dunas",
-                    body = "Las dunas son un destino popular para practicar sandboarding, realizar recorridos en vehículos todoterreno, caminar, tomar fotografías y observar el cielo durante las noches despejadas. Todas las actividades deben realizarse en zonas autorizadas y con las precauciones adecuadas.",
-                    narrationFileName = "narr_hot_samalayuca_aventura_dunas.mp3",
+                    summary = "Samalayuca permite actividades como sandboarding, recorridos autorizados, caminatas, fotografía y observación del cielo nocturno.",
                     yaw = 90f,
                     pitch = 0f,
                     hapticEffectId = "samalayuca-aventura",
@@ -211,8 +197,7 @@ object DestinationRepository {
                 Hotspot(
                     id = "area-protegida",
                     title = "Área protegida",
-                    body = "Este ecosistema combina arena, sierras y vegetación desértica. Una visita responsable debe respetar las rutas autorizadas, evitar daños al terreno y reducir cualquier impacto sobre la flora y la fauna que habitan la región.",
-                    narrationFileName = "narr_hot_samalayuca_area_protegida.mp3",
+                    summary = "Las dunas forman un ecosistema frágil de arena, sierras, flora y fauna que requiere recorridos responsables y bajo impacto.",
                     yaw = 180f,
                     pitch = 3f,
                     hapticEffectId = "samalayuca-protegida",
@@ -236,8 +221,7 @@ object DestinationRepository {
                 Hotspot(
                     id = "creel",
                     title = "Creel",
-                    body = "Creel es una de las principales bases de viaje en la Sierra Tarahumara. Su estación ferroviaria, hospedajes y servicios turísticos facilitan el acceso a valles, lagos, miradores y comunidades ubicadas en los alrededores.",
-                    narrationFileName = "narr_hot_creel_arareko_creel.mp3",
+                    summary = "Creel funciona como base de viaje hacia valles, lagos, miradores y comunidades de la Sierra Tarahumara.",
                     yaw = 180f,
                     pitch = -2f,
                     hapticEffectId = "creel-pueblo",
@@ -245,8 +229,7 @@ object DestinationRepository {
                 Hotspot(
                     id = "lago-arareko",
                     title = "Lago de Arareko",
-                    body = "El Lago de Arareko está rodeado de bosques de pino y formaciones rocosas. Es un lugar frecuente para caminar, tomar fotografías, pasear en lancha y disfrutar de un entorno tranquilo al aire libre.",
-                    narrationFileName = "narr_hot_creel_arareko_lago_arareko.mp3",
+                    summary = "El Lago de Arareko está rodeado por bosque de pino y formaciones rocosas, en un entorno tranquilo cercano a Creel.",
                     yaw = -90f,
                     pitch = 3f,
                     hapticEffectId = "creel-lago",
@@ -254,8 +237,7 @@ object DestinationRepository {
                 Hotspot(
                     id = "valles-piedra",
                     title = "Valles de piedra",
-                    body = "Desde Creel parten recorridos hacia los valles de los Hongos, las Ranas y los Monjes. Sus formaciones rocosas crean figuras características y complementan la visita a la comunidad de San Ignacio Arareko y otros paisajes cercanos.",
-                    narrationFileName = "narr_hot_creel_arareko_valles_piedra.mp3",
+                    summary = "Los valles de los Hongos, las Ranas y los Monjes destacan por formaciones rocosas de figuras características.",
                     yaw = 90f,
                     pitch = -2f,
                     hapticEffectId = "creel-valles",
@@ -279,8 +261,7 @@ object DestinationRepository {
                 Hotspot(
                     id = "caida-principal",
                     title = "Caída principal",
-                    body = "La Cascada de Basaseachi alcanza doscientos cuarenta y seis metros de caída libre. Es uno de los paisajes naturales más reconocidos de la Sierra Tarahumara y muestra su mayor caudal después de la temporada de lluvias.",
-                    narrationFileName = "narr_hot_basaseachi_caida_principal.mp3",
+                    summary = "Basaseachi alcanza 246 metros de caída libre y presenta su mayor caudal después de la temporada de lluvias.",
                     yaw = 180f,
                     pitch = -7f,
                     hapticEffectId = "basaseachi-caida",
@@ -288,8 +269,7 @@ object DestinationRepository {
                 Hotspot(
                     id = "barranca-candamena",
                     title = "Barranca de Candameña",
-                    body = "El agua de la cascada desciende hacia la Barranca de Candameña. Este entorno combina paredes rocosas, bosques de pino y encino, y miradores que ofrecen cambios de perspectiva muy marcados sobre el paisaje.",
-                    narrationFileName = "narr_hot_basaseachi_barranca_candamena.mp3",
+                    summary = "La Barranca de Candameña combina paredes rocosas, bosques de pino y encino, y miradores alrededor de la cascada.",
                     yaw = -90f,
                     pitch = 3f,
                     hapticEffectId = "basaseachi-barranca",
@@ -297,8 +277,7 @@ object DestinationRepository {
                 Hotspot(
                     id = "senderos-miradores",
                     title = "Senderos y miradores",
-                    body = "Los recorridos del parque incluyen senderos y puntos de observación desde los que puede apreciarse la cascada y la barranca. La experiencia cambia según la temporada, especialmente después de las lluvias, cuando aumenta el caudal del agua.",
-                    narrationFileName = "narr_hot_basaseachi_senderos_miradores.mp3",
+                    summary = "Los senderos y miradores del parque ofrecen distintas perspectivas de la cascada y la barranca a lo largo del año.",
                     yaw = 90f,
                     pitch = -2f,
                     hapticEffectId = "basaseachi-senderos",
@@ -322,8 +301,7 @@ object DestinationRepository {
                 Hotspot(
                     id = "ciudad-plata",
                     title = "Ciudad de la plata",
-                    body = "Parral creció alrededor de la minería de plata. Su desarrollo económico dejó templos, casonas y una traza urbana relacionada con el auge minero del norte de la Nueva España y de los siglos posteriores.",
-                    narrationFileName = "narr_hot_parral_ciudad_plata.mp3",
+                    summary = "Parral creció alrededor de la minería de plata, cuyo auge dejó templos, casonas y una marcada identidad histórica.",
                     yaw = -90f,
                     pitch = -2f,
                     hapticEffectId = "parral-plata",
@@ -331,8 +309,7 @@ object DestinationRepository {
                 Hotspot(
                     id = "palacio-alvarado",
                     title = "Palacio Alvarado",
-                    body = "El Palacio Alvarado refleja la riqueza minera de la región. Su arquitectura señorial, sus interiores ornamentados y sus colecciones permiten conocer aspectos de la vida social y económica de Parral durante una de sus épocas de mayor prosperidad.",
-                    narrationFileName = "narr_hot_parral_palacio_alvarado.mp3",
+                    summary = "El Palacio Alvarado refleja la prosperidad minera de Parral mediante su arquitectura señorial, interiores y colecciones.",
                     yaw = 180f,
                     pitch = 3f,
                     hapticEffectId = "parral-palacio",
@@ -340,8 +317,7 @@ object DestinationRepository {
                 Hotspot(
                     id = "memoria-villa",
                     title = "Memoria de Villa",
-                    body = "La historia de Parral está estrechamente vinculada con Francisco Villa. Museos, recorridos urbanos y relatos locales conservan la memoria de su presencia y de los acontecimientos revolucionarios que forman parte de la identidad de la ciudad.",
-                    narrationFileName = "narr_hot_parral_memoria_villa.mp3",
+                    summary = "Parral conserva en museos, recorridos y relatos locales la memoria de Francisco Villa y de diversos episodios revolucionarios.",
                     yaw = 90f,
                     pitch = -3f,
                     hapticEffectId = "parral-villa",
@@ -365,8 +341,7 @@ object DestinationRepository {
                 Hotspot(
                     id = "pueblo-barrancas",
                     title = "Pueblo entre barrancas",
-                    body = "Batopilas se encuentra en el fondo de una barranca de clima cálido, rodeado por grandes montañas. La ruta de descenso permite apreciar la escala de la Sierra Tarahumara y el aislamiento geográfico que caracteriza al pueblo.",
-                    narrationFileName = "narr_hot_batopilas_pueblo_barrancas.mp3",
+                    summary = "Batopilas se encuentra al fondo de una barranca de clima cálido, rodeado por grandes montañas de la Sierra Tarahumara.",
                     yaw = 180f,
                     pitch = -4f,
                     hapticEffectId = "batopilas-pueblo",
@@ -374,8 +349,7 @@ object DestinationRepository {
                 Hotspot(
                     id = "rio-batopilas",
                     title = "Río Batopilas",
-                    body = "El Río Batopilas acompaña calles, puentes y áreas de descanso de la comunidad. Su presencia forma parte del paisaje cotidiano y se relaciona con el significado rarámuri del nombre Batopilas, asociado con un río encajonado.",
-                    narrationFileName = "narr_hot_batopilas_rio_batopilas.mp3",
+                    summary = "El Río Batopilas forma parte del paisaje cotidiano del poblado y acompaña calles, puentes y áreas de descanso.",
                     yaw = -90f,
                     pitch = 1f,
                     hapticEffectId = "batopilas-rio",
@@ -383,8 +357,7 @@ object DestinationRepository {
                 Hotspot(
                     id = "legado-minero",
                     title = "Legado minero",
-                    body = "Haciendas, ruinas, templos y antiguos caminos recuerdan el auge de la minería de plata. Estos vestigios muestran la relación histórica de Batopilas con las rutas comerciales y las actividades económicas de la Sierra Tarahumara.",
-                    narrationFileName = "narr_hot_batopilas_legado_minero.mp3",
+                    summary = "Haciendas, ruinas, templos y caminos conservan huellas del auge de la minería de plata en Batopilas.",
                     yaw = 90f,
                     pitch = -3f,
                     hapticEffectId = "batopilas-mineria",
@@ -408,8 +381,7 @@ object DestinationRepository {
                 Hotspot(
                     id = "cumbres-sinforosa",
                     title = "Cumbres de Sinforosa",
-                    body = "El mirador Cumbres de Sinforosa, cerca de Guachochi, ofrece una vista amplia hacia una de las barrancas más profundas y escénicas de Chihuahua. Desde este punto puede apreciarse la gran escala del relieve serrano.",
-                    narrationFileName = "narr_hot_sinforosa_cumbres.mp3",
+                    summary = "Cumbres de Sinforosa ofrece una vista amplia hacia una de las barrancas más profundas y escénicas de Chihuahua.",
                     yaw = -90f,
                     pitch = -3f,
                     hapticEffectId = "sinforosa-cumbres",
@@ -417,8 +389,7 @@ object DestinationRepository {
                 Hotspot(
                     id = "rio-verde",
                     title = "Río Verde",
-                    body = "En el fondo de la barranca corre el Río Verde, parte importante de la red hidrológica de la sierra. Su recorrido acentúa la profundidad visual del paisaje y conecta distintas zonas naturales de la región.",
-                    narrationFileName = "narr_hot_sinforosa_rio_verde.mp3",
+                    summary = "El Río Verde recorre el fondo de la Sinforosa y forma parte de la red hidrológica de la Sierra Tarahumara.",
                     yaw = 90f,
                     pitch = 1f,
                     hapticEffectId = "sinforosa-rio",
@@ -426,8 +397,7 @@ object DestinationRepository {
                 Hotspot(
                     id = "paisaje-serrano",
                     title = "Paisaje serrano",
-                    body = "El paisaje combina bosques de pino, formaciones rocosas, sombras profundas y niebla estacional. Su amplitud y su ambiente contemplativo convierten a la Sinforosa en un cierre panorámico ideal para este recorrido por Chihuahua.",
-                    narrationFileName = "narr_hot_sinforosa_paisaje_serrano.mp3",
+                    summary = "La Sinforosa combina bosques de pino, formaciones rocosas, grandes desniveles, sombras profundas y niebla estacional.",
                     yaw = 180f,
                     pitch = -4f,
                     hapticEffectId = "sinforosa-paisaje",

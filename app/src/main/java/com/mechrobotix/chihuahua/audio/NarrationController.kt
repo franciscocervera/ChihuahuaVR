@@ -92,10 +92,7 @@ class NarrationController(
         publishStatus(NarrationStatus.PREPARING)
 
         activePlayer.setAudioAttributes(
-            AudioAttributes.Builder()
-                .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
-                .setUsage(AudioAttributes.USAGE_MEDIA)
-                .build(),
+            capturableAudioAttributes(AudioAttributes.CONTENT_TYPE_SPEECH),
         )
         activePlayer.setOnPreparedListener { preparedPlayer ->
             if (!isCurrent(generation, preparedPlayer)) {
